@@ -1,10 +1,10 @@
 # dataset params
-dataset: 'cifar'
-classes: 10
+dataset: 'tiny'
+classes: 200
 
 # model params
 model_type: 'EDM'
-net_type: 'UNetG'
+net_type: 'UNetC'
 diffusion:
   sigma_data: 0.5
   p_mean: -1.2
@@ -16,21 +16,20 @@ diffusion:
   S_max: 1
   S_noise: 1.007
 network:
-  image_shape: [3, 32, 32]
+  image_shape: [3, 64, 64]
   n_channels: 128
   ch_mults: [1, 2, 2, 2]
-  is_attn: [False, True, False, False]
-  dropout: 0.13
-  n_blocks: 3 # equiv. to "n_blocks=2" in UNetHo + "use BigGAN up/down"
+  is_attn: [False, False, True, False]
+  dropout: 0.1
+  n_blocks: 5 # equiv. to "n_blocks=4" in UNetHo + "use BigGAN up/down"
 
 # training params
 n_epoch: 2000
-batch_size: 128
-lrate: 5.0e-3
+batch_size: 192
+lrate: 1.5e-4
 warm_epoch: 200
-tref_epoch: 400
 load_epoch: -1
-flip: True
+flip: False
 ema: 0.9993
 # optim: 'Adam'
 # optim_args:
@@ -38,7 +37,7 @@ ema: 0.9993
 
 # testing params
 n_sample: 30
-save_dir: './output_G10'
+save_dir: './output_Ctiny'
 save_model: True
 
 # linear probe
@@ -46,5 +45,5 @@ linear:
   n_epoch: 15
   batch_size: 128
   lrate: 1.0e-3
-  timestep: 4
+  timestep: 5
   blockname: 'out_6'

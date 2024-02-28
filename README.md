@@ -36,3 +36,19 @@ torchrun --nproc_per_node=4
   sample.py --config config/cifar100/E.yaml --use_amp --epoch 1600
   sample.py --config config/cifar100/G.yaml --use_amp --epoch 1999
 ```
+
+## Results
+Config G seems to be inferior to Config E on pixel-space generation.
+
+So here we only report Config C and Config E results on CIFAR-10, CIFAR-100, and Tiny-ImageNet datasets.
+
+|        Config       |     Model     | Network size | Best FID (18 steps)   | Best linear probe acc. |
+|:--------------------|:--------------|:-------------|:----------------------|:-----------------------|
+| cifar10/C.yaml      | Uncond. EDM2C | 39.5M        | 3.03 @ epoch 1000     | 91.85 @ epoch 500      |
+| cifar10/E.yaml      | Uncond. EDM2E | 39.5M        | 2.72 @ epoch 2000     | 93.46 @ epoch 1000     |
+| cifar100/C.yaml     | Uncond. EDM2C | 39.5M        | 5.06 @ epoch 1000     | 65.40 @ epoch 500      |
+| cifar100/E.yaml     | Uncond. EDM2E | 39.5M        | 4.33 @ epoch 2000     | 69.04 @ epoch 1100     |
+| tinyimagenet/C.yaml | Uncond. EDM2C | 62.4M        | 15.96 @ epoch 1600*   | 50.99 @ epoch 600      |
+| tinyimagenet/E.yaml | Uncond. EDM2E | 62.4M        | TODO                  | TODO                   |
+
+*Note: The FID does not saturate after 1600 epochs, and keep training leads to lower FIDs.

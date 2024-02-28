@@ -1,13 +1,11 @@
 import argparse
 import os
-from functools import partial
 import math
 
 import torch
 import torch.distributed as dist
 import yaml
 from datasets import get_dataset
-from metric import KNN, LinearProbe
 from torchvision.utils import make_grid, save_image
 from torch.utils.tensorboard import SummaryWriter
 from tqdm import tqdm
@@ -54,20 +52,15 @@ def train(opt):
     train_set = get_dataset(name=opt.dataset, root="./data", train=True, flip=opt.flip)
     print0("train dataset:", len(train_set))
 
-    if local_rank == 0:
-        down_train = get_dataset(name=opt.dataset, root="./data", train=True, flip=True)
-        down_test = get_dataset(name=opt.dataset, root="./data", train=False)
-        knn = KNN(down_train, down_test, opt.linear['batch_size'])
-        lp = LinearProbe(down_train, down_test, opt.classes, opt.linear['batch_size'], opt.linear['lrate'], opt.linear['n_epoch'])
-
+    total_bs = opt.batch_size
+    total_gpus = dist.get_world_size()
+    per_gpu_bs = total_bs // total_gpus
     train_loader, sampler = DataLoaderDDP(train_set,
-                                          batch_size=opt.batch_size,
+                                          batch_size=per_gpu_bs,
                                           shuffle=True)
 
     lr = opt.lrate
-    DDP_multiplier = dist.get_world_size()
-    print0("Using DDP, lr = %f * %d" % (lr, DDP_multiplier))
-    lr *= DDP_multiplier
+    print0("Using DDP, effective batch size = %d = %d * %d, lr = %f" % (total_bs, total_gpus, per_gpu_bs, lr))
     optim = get_optimizer(diff.parameters(), opt, lr=lr)
     scaler = torch.cuda.amp.GradScaler(enabled=use_amp)
 
@@ -85,6 +78,8 @@ def train(opt):
             if ep < opt.warm_epoch:
                 g['lr'] = lr * min((ep + 1.0) / opt.warm_epoch, 1.0) # warmup
             else:
+                if not hasattr(opt, 'tref_epoch'):
+                    opt.tref_epoch = opt.n_epoch
                 g['lr'] = lr / math.sqrt(max(ep / opt.tref_epoch, 1.0)) # inverse square root
         sampler.set_epoch(ep)
         dist.barrier()
@@ -121,14 +116,6 @@ def train(opt):
                 pass
             else:
                 continue
-
-            if ep > 0:
-                print(f'epoch {ep}, evaluating:')
-                feat_func = partial(ema.ema_model.get_feature, t=opt.linear['timestep'], name=opt.linear['blockname'], norm=False, use_amp=use_amp)
-                test_knn = knn.evaluate(feat_func)
-                test_lp = lp.evaluate(feat_func)
-                writer.add_scalar('metrics/K Nearest Neighbors', test_knn, ep)
-                writer.add_scalar('metrics/Linear Probe', test_lp, ep)
 
             if opt.model_type == 'EDM':
                 ema_sample_method = ema.ema_model.edm_sample

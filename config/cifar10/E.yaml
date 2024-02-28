@@ -25,8 +25,8 @@ network:
 
 # training params
 n_epoch: 2000
-batch_size: 128
-lrate: 5.0e-3
+batch_size: 512
+lrate: 2.0e-2
 warm_epoch: 200
 tref_epoch: 400
 load_epoch: -1
