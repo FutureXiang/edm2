@@ -37,10 +37,14 @@ torchrun --nproc_per_node=4
   sample.py --config config/cifar100/G.yaml --use_amp --epoch 1999
 ```
 
-## Results
-Config G seems to be inferior to Config E on pixel-space generation.
+## Observations and takeaways :star:
+- Config C shows **consistent improvements** over the original EDM. The main contribution is from the multi-task weighting.
+- Config E could perform better than Config C, but the convergence is **significantly slower** (see the epoch counts below).
+- Config G seems to **favor latent-space modeling**, and it's inferior to Config E on pixel-space generation.
+- Post-hoc EMA (and the power function EMA) tends to **favor longer training** durations. For small-sized datasets like CIFAR, it won't help much.
 
-So here we only report Config C and Config E results on CIFAR-10, CIFAR-100, and Tiny-ImageNet datasets.
+## Results
+We report Config C and Config E results on CIFAR-10, CIFAR-100, and Tiny-ImageNet datasets.
 
 |        Config       |     Model     | Network size | Best FID (18 steps)   | Best linear probe acc. |
 |:--------------------|:--------------|:-------------|:----------------------|:-----------------------|
@@ -49,6 +53,6 @@ So here we only report Config C and Config E results on CIFAR-10, CIFAR-100, and
 | cifar100/C.yaml     | Uncond. EDM2C | 39.5M        | 5.06 @ epoch 1000     | 65.40 @ epoch 500      |
 | cifar100/E.yaml     | Uncond. EDM2E | 39.5M        | 4.33 @ epoch 2000     | 69.04 @ epoch 1100     |
 | tinyimagenet/C.yaml | Uncond. EDM2C | 62.4M        | 15.96 @ epoch 1600*   | 50.99 @ epoch 600      |
-| tinyimagenet/E.yaml | Uncond. EDM2E | 62.4M        | TODO                  | TODO                   |
+| tinyimagenet/E.yaml | Uncond. EDM2E | 62.4M        | 16.79 @ epoch 1500*   | 52.07 @ epoch 1400     |
 
-*Note: The FID does not saturate after 1600 epochs, and keep training leads to lower FIDs.
+*Note: Unfinished training (due to high computational cost). The FID has not saturated, and keep training can lead to lower FIDs.
